@@ -1,0 +1,1271 @@
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <script src="https://code.highcharts.com/stock/highstock.js"></script>
+    <script src="https://code.highcharts.com/stock/modules/data.js"></script>
+    <script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/stock/modules/export-data.js"></script>
+
+    <div class="header">
+        <h1>KPI Dashboard</h1>
+    </div>
+
+    <div class="row">
+        <div id="chartContainer1" class="col-4"></div>
+        <div id="chartContainer2" class="col-4"></div>
+        <div id="chartContainer3" class="col-4"></div>
+        <div id="chartContainer4" class="col-4"></div>
+    </div>
+
+    <div class="row">
+        <div id="chartContainer5" class="col-4-1"></div>
+        <div id="chartContainer6" class="col-4-1"></div>
+        <div id="chartContainer7" class="col-4-1"></div>
+        <div id="chartContainer8" class="col-4-1"></div>
+
+    </div>
+
+    <style>
+        .col-4 {
+            width: 25%;
+            margin: auto 2px;
+        }
+
+        .col-4-1 {
+            width: 25%;
+            margin: auto 2px;
+        }
+
+        .row {
+            display: flex;
+            margin: 5px auto;
+        }
+
+        body {
+            background-color: rgba(18, 51, 55);
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .header {
+            padding: 3px;
+            text-align: center;
+            background: rgba(18, 51, 55);
+            color: rgb(216, 229, 230);
+            font-size: 20px;
+            font-family: 'Comic Sans MS';
+
+        }
+
+        .highcharts-background {
+            fill: rgba(18, 51, 55);
+        }
+
+        .highcharts-figure,
+        .highcharts-data-table table {
+            min-width: 320px;
+            max-width: 800px;
+            margin: 1em auto;
+        }
+
+        #container {
+            height: 450px;
+        }
+
+        .highcharts-data-table table {
+            font-family: Verdana, sans-serif;
+            border-collapse: collapse;
+            border: 1px solid #EBEBEB;
+            margin: 10px auto;
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .highcharts-data-table caption {
+            padding: 1em 0;
+            font-size: 1.2em;
+            color: #555;
+        }
+
+        .highcharts-data-table th {
+            font-weight: 600;
+            padding: 0.5em;
+        }
+
+        .highcharts-data-table td,
+        .highcharts-data-table th,
+        .highcharts-data-table caption {
+            padding: 0.5em;
+        }
+
+        .highcharts-data-table thead tr,
+        .highcharts-data-table tr:nth-child(even) {
+            background: #f8f8f8;
+        }
+
+        .highcharts-data-table tr:hover {
+            background: #f1f7ff;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+
+        var data = Highcharts.getJSON(`https://raw.githubusercontent.com/shivakuchya/json/master/finalsamplesuperstore.json`,
+            function (data) {
+
+                var tempDateArr = data.map(item => item.OrderDate)
+                var tempData = data
+                var parsedDate = []
+                for (var i = 0; i < tempDateArr.length; i++) {
+                    var date = new Date(tempDateArr[i]),
+                        mnth = ("0" + (date.getMonth() + 1)).slice(-2),
+                        day = ("0" + date.getDate()).slice(-2);
+                    parsedDate.push(Date.parse([date.getFullYear(), mnth].join(" ")));
+                }
+                for (var i = 0; i < tempData.length; i++) {
+                    tempData[i].OrderDate = parsedDate[i]
+                }
+
+                //creating a distinct array of Dates in YYYYMM format 
+                var setDate = new Set(parsedDate)
+                var distinctdate = Array.from(setDate)
+                actualDistinctDate = distinctdate.sort()     // sorted distinct date set 
+
+
+                // Formated key value pair according to date and avg.
+                var actualPair = []
+                var TotalSales = 0
+                var TargetValue = 0
+                for (var i = 0; i < actualDistinctDate.length; i++) {
+                    var actualArray = []
+                    var count = 0
+                    var sum = 0
+                    var targetsum = 0
+                    for (var j = 0; j < tempData.length; j++) {
+                        if (actualDistinctDate[i] === tempData[j].OrderDate) {
+                            sum += tempData[j].Sales                   // Total month wise sales 
+                            targetsum+=tempData[j].SalesForecast
+                            count += 1
+                        }
+                    }
+                    TargetValue+=targetsum
+                    TotalSales += sum
+                    actualArray.push(distinctdate[i])
+                    actualArray.push(sum)
+                    actualPair.push(actualArray)    // Array of multiDate and average
+                }
+                // days to ship area chart
+                Highcharts.stockChart('chartContainer1', {
+                    chart: {
+                        type: 'line',
+                        zoomType: 'xy',
+                        panning: true,
+                        panKey: 'shift'
+                    },
+                    navigator: {
+                        enabled: false
+                    },
+
+                    rangeSelector: {
+                        enabled: false,
+                        inputEnabled: false,
+                        inputStyle: {
+                            color: 'rgb(237, 138, 136 )',
+                            fontWeight: 'bold'
+                        },
+                        buttonTheme: {
+                            fill: 'rgb(237, 138, 136 )',
+
+                        },
+                        states: {
+                            select: {
+                                fill: 'rgb(237, 138, 136 )',
+                                style: {
+                                    color: 'rgb(237, 138, 136 )'
+                                }
+                            }
+                        },
+
+                    },
+                    navigation: {
+                        buttonOptions: {
+                            enabled: false
+                        },
+                    },
+
+
+                    title: {
+                        
+                        useHTML: true,
+                        text : '<div><p style= "margin: 1px 1px;"> Total Sales <span style = "font-size: 25px;color:rgb(237, 138, 136 );">  $' + TotalSales +'</span></p></div>',
+                        
+                        style: {
+                            color: 'rgb(216, 229, 230)',
+                            fontWeight: 'null',
+                        },
+                        
+                        align: 'left',
+                        x: 0,
+                    },
+                    subtitle: {
+                        useHTML: true,
+                        text : '<div><p style="margin: 1px 1px; font-size: 15px"> Target Sales <span style = "font-size: 20px">  $' + TargetValue +'</span></p></div>',
+                        style: {
+                            color: 'rgb(216, 229, 230)',
+                            fontWeight: 'null',
+                        },
+                        align: 'left',
+                        x: 5
+                    },
+                    credits: {
+                        enabled: false
+                    },
+
+                    scrollbar: {
+                        enabled: false
+                    },
+                    yAxis: {
+                        gridLineWidth: 0,
+                        plotLines: [{
+                            color: 'rgb(237, 138, 136 )',
+                            width: 2,
+                            value: 240000
+                        }]
+                    },
+                    series: [{
+                        name: 'Average Shipping Time',
+                        data: actualPair,
+                        color: 'rgb(237, 138, 136 )',
+                        type: 'area',
+                        tooltip: {
+                            valueDecimals: 2
+                        },
+                        fillColor: {
+
+                            linearGradient: {
+                                x1: 4,
+                                y1: 4,
+                                x2: 0,
+                                y2: 0
+                            },
+                            stops: [
+                                [0, Highcharts.getOptions().colors[0]],
+                                [1, Highcharts.color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                            ]
+                        }
+                    }]
+                });
+
+
+                //-----------------------------------------
+                var tempDateArr = data.map(item => item.OrderDate)
+                var tempData = data
+                var parsedDate = []
+                for (var i = 0; i < tempDateArr.length; i++) {
+                    var date = new Date(tempDateArr[i]),
+                        mnth = ("0" + (date.getMonth() + 1)).slice(-2),
+                        day = ("0" + date.getDate()).slice(-2);
+                    parsedDate.push(Date.parse([date.getFullYear(), mnth].join(" ")));
+                }
+
+                for (var i = 0; i < tempData.length; i++) {
+                    tempData[i].OrderDate = parsedDate[i]
+
+                }
+
+                //creating a distinct array of Dates in YYYYMM format 
+                var setDate = new Set(parsedDate)
+                var distinctdate = Array.from(setDate)
+                actualDistinctDate = distinctdate.sort()
+
+                // Formated key value pair according to date and avg.
+                var actualPair = []
+                var showAvg = 0
+                var showCount = 0
+                for (var i = 0; i < actualDistinctDate.length; i++) {
+                    var actualArray = []
+                    var count = 0
+                    var sum = 0
+                    var avg = 1
+                    for (var j = 0; j < tempData.length; j++) {
+                        if (actualDistinctDate[i] === tempData[j].OrderDate) {
+                            sum += tempData[j].Sales
+                            count += 1
+                        }
+                    }
+                    var avg = sum / count  //Finding Average 
+                    // Temperary array for creating key value pair                
+                    actualArray.push(distinctdate[i])
+                    actualArray.push(avg)
+                    showAvg += actualArray[1]
+                    actualPair.push(actualArray)    // Array of multiDate and average
+                    showCount += 1
+                }
+                // days to ship area chart
+                Highcharts.stockChart('chartContainer2', {
+                    chart: {
+                        type: 'line',
+                        zoomType: 'xy',
+                        panning: true,
+                        panKey: 'shift'
+                    },
+                    navigator: {
+                        enabled: false
+                    },
+                    rangeSelector: {
+                        enabled: false,
+                        inputEnabled: false,
+                        inputStyle: {
+                            color: 'gray',
+                            fontWeight: 'bold'
+                        },
+                        buttonTheme: {
+                            fill: 'rgba(26,146,146,1)',
+
+                        },
+                        states: {
+                            select: {
+                                fill: 'gray',
+                                style: {
+                                    color: 'gray'
+                                }
+                            }
+                        },
+
+                    },
+                    navigation: {
+                        buttonOptions: {
+                            enabled: false
+                        },
+                    },
+                    title: {
+
+                        useHTML: true,
+                        text : '<div><p style= "margin: 1px 1px;"> Average Sales <span style = "font-size: 25px;color:rgb(237, 138, 136 );">  $' + (TotalSales / 12420).toFixed(2) +'</span></p></div>',
+                        
+                        style: {
+                            color: 'rgb(216, 229, 230)',
+                            fontWeight: 'null'
+                        },
+                        align: 'left',
+                        x: 0
+                    },
+                    subtitle: {
+                        useHTML: true,
+                        text : '<div><p style= "margin: 1px 1px;font-size: 15px;"> Avg. Estimated Sales <span style = "font-size: 20px;">  $' + (TargetValue/12420).toFixed(2) +'</span></p></div>',
+                        style: {
+                            color: 'rgb(216, 229, 230)',
+                            fontWeight: 'null',
+                        },
+                        align: 'left',
+                        x: 5
+                    },
+                    credits: {
+                        enabled: false
+                    },
+
+                    scrollbar: {
+                        enabled: false
+                    },
+
+                    yAxis: {
+                        gridLineWidth: 0,
+                        plotLines: [{
+                            color: 'rgb(237, 138, 136 )',
+                            width: 2,
+                            value: 386
+                        }]
+                    },
+                    series: [{
+                        name: 'Average Shipping Time',
+                        data: actualPair,
+                        color: 'rgb(237, 138, 136 )',
+                        type: 'area',
+                        tooltip: {
+                            valueDecimals: 2
+                        },
+                        fillColor: {
+
+                            linearGradient: {
+                                x1: 4,
+                                y1: 4,
+                                x2: 0,
+                                y2: 0
+                            },
+                            stops: [
+                                [0, Highcharts.getOptions().colors[0]],
+                                [1, Highcharts.color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                            ]
+                        }
+                    }]
+                });
+
+                // -------------------------------------------
+
+
+                var tempDateArr = data.map(item => item.OrderDate)
+                var tempData = data
+                var parsedDate = []
+                
+                
+                
+                for (var i = 0; i < tempDateArr.length; i++) {
+                    var date = new Date(tempDateArr[i]),
+                        mnth = ("0" + (date.getMonth() + 1)).slice(-2),
+                        day = ("0" + date.getDate()).slice(-2);
+                    parsedDate.push(Date.parse([date.getFullYear(), mnth].join(" ")));
+                }
+                for (var i = 0; i < tempData.length; i++) {
+                    tempData[i].OrderDate = parsedDate[i]
+                }
+
+                //creating a distinct array of Dates in YYYYMM format 
+                var setDate = new Set(parsedDate)
+                var distinctdate = Array.from(setDate)
+                actualDistinctDate = distinctdate.sort()     // sorted distinct date set 
+
+
+                // Formated key value pair according to date and avg.
+                var actualPair = []
+                var totalProfit = 0
+                for (var i = 0; i < actualDistinctDate.length; i++) {
+                    var actualArray = []
+                    var sum = 0
+                    for (var j = 0; j < tempData.length; j++) {
+                        if (actualDistinctDate[i] === tempData[j].OrderDate) {
+                            sum += tempData[j].Profit                  // Total month wise sales 
+
+                        }
+
+                    }
+                    totalProfit += sum
+                    // Temperary array for creating key value pair                
+                    actualArray.push(distinctdate[i])
+                    actualArray.push(sum)
+                    actualPair.push(actualArray)    // Array of multiDate and average
+                }
+                console.log(totalProfit)
+                Highcharts.stockChart('chartContainer3', {
+                    chart: {
+                        type: 'line',
+                        zoomType: 'xy',
+                        panning: true,
+                        panKey: 'shift'
+                    },
+                    navigator: {
+                        enabled: false
+                    },
+                    rangeSelector: {
+                        enabled: false,
+                        inputEnabled: false,
+                        inputStyle: {
+                            color: 'gray',
+                            fontWeight: 'bold'
+                        },
+                        buttonTheme: {
+                            fill: 'rgba(26,146,146,1)',
+
+                        },
+                        states: {
+                            select: {
+                                fill: 'gray',
+                                style: {
+                                    color: 'gray'
+                                }
+                            }
+                        },
+
+                    },
+                    navigation: {
+                        buttonOptions: {
+                            enabled: false
+                        },
+                    },
+                    title: {
+                        useHTML: true,
+                        text : '<div><p style= "margin: 1px 1px;"> Total Profit <span style = "font-size: 25px;color:rgba(26,146,146,1);">  $' + totalProfit +'</span></p></div>',
+                        style: {
+                            color: 'rgb(216, 229, 230)',
+                            fontWeight: 'null'
+                        },
+                        align: 'left',
+                        x: 0
+                    },
+                    subtitle: {
+                        useHTML: true,     
+                        text : '<div><p style= "margin: 1px 1px;font-size: 15px;"> Target Profit <span style = "font-size: 20px;">  $' + 350000 +'</span></p></div>',
+                        style: {
+                            color: 'rgb(216, 229, 230)',
+                            fontWeight: 'null',
+                        },
+                        align: 'left',
+                        x: 5
+                    },
+
+                    credits: {
+                        enabled: false
+                    },
+                    scrollbar: {
+                        enabled: false
+                    },
+                    yAxis: {
+                        gridLineWidth: 0,
+                        plotLines: [{
+                            color: 'rgba(26,146,146,1)',
+                            width: 2,
+                            value: 37500
+                        }]
+                    },
+                    series: [{
+                        name: 'Average Shipping Time',
+                        data: actualPair,
+                        color: 'rgba(26,146,146,1)',
+                        type: 'area',
+                        tooltip: {
+                            valueDecimals: 2
+                        },
+                        fillColor: {
+
+                            linearGradient: {
+                                x1: 4,
+                                y1: 4,
+                                x2: 0,
+                                y2: 0
+                            },
+                            stops: [
+                                [0, Highcharts.getOptions().colors[0]],
+                                [1, Highcharts.color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                            ]
+                        }
+                    }]
+                });
+                //------------------------------------------------------------
+
+                var tempDateArr = data.map(item => item.OrderDate)
+                var tempData = data
+                var parsedDate = []
+                for (var i = 0; i < tempDateArr.length; i++) {
+                    var date = new Date(tempDateArr[i]),
+                        mnth = ("0" + (date.getMonth() + 1)).slice(-2),
+                        day = ("0" + date.getDate()).slice(-2);
+                    parsedDate.push(Date.parse([date.getFullYear(), mnth].join(" ")));
+                }
+                for (var i = 0; i < tempData.length; i++) {
+                    tempData[i].OrderDate = parsedDate[i]
+                }
+
+                //creating a distinct array of Dates in YYYYMM format 
+                var setDate = new Set(parsedDate)
+                var distinctdate = Array.from(setDate)
+                actualDistinctDate = distinctdate.sort()
+
+                // Formated key value pair according to date and avg.
+                var actualPair = []
+                var showAvg = 0
+                var showCount = 0
+                var averageProfitSum = 0
+                for (var i = 0; i < actualDistinctDate.length; i++) {
+                    var actualArray = []
+                    var count = 0
+                    var sum = 0
+                    var avg = 1
+                    for (var j = 0; j < tempData.length; j++) {
+                        if (actualDistinctDate[i] === tempData[j].OrderDate) {
+                            sum += tempData[j].Profit
+                            count += 1
+                        }
+                    }
+                    var avg = sum / count  //Finding Average 
+                    // Temperary array for creating key value pair                
+                    actualArray.push(distinctdate[i])
+                    actualArray.push(avg)
+                    showAvg += actualArray[1]
+                    actualPair.push(actualArray)    // Array of multiDate and average
+                    showCount += 1
+                    averageProfitSum+=avg
+                }
+console.log(averageProfitSum)
+
+                // days to ship area chart
+                Highcharts.stockChart('chartContainer4', {
+                    chart: {
+                        type: 'line',
+                        zoomType: 'xy',
+                        panning: true,
+                        panKey: 'shift'
+                    },
+                    navigator: {
+                        enabled: false
+                    },
+                    rangeSelector: {
+                        enabled: false,
+                        inputEnabled: false,
+                        inputStyle: {
+                            color: 'gray',
+                            fontWeight: 'bold'
+                        },
+                        buttonTheme: {
+                            fill: 'rgba(26,146,146,1)',
+
+                        },
+                        states: {
+                            select: {
+                                fill: 'gray',
+                                style: {
+                                    color: 'gray'
+                                }
+                            }
+                        },
+
+                    },
+                    navigation: {
+                        buttonOptions: {
+                            enabled: false
+                        },
+                    },
+                    title: {
+                        useHTML: true,
+                        text : '<div><p style= "margin: 0px 1px;"> Average Profit <span style = "font-size: 25px;color:rgb(237, 138, 136 );">  $' + averageProfitSum.toFixed(2) +'</span></p></div>',
+                        style: {
+                            color: 'rgb(216, 229, 230)',
+                            fontWeight: 'null'
+                        },
+                        align: 'left',
+                        x: 0
+                    },
+                    subtitle: {
+                        useHTML: true,     
+                        text : '<div><p style= "margin: 1px 1px;font-size: 15px;">Avg. Profit/month <span style = "font-size: 20px;">  $' + (totalProfit/12420).toFixed(2) +'</span></p></div>',
+                        style: {
+                            color: 'rgb(216, 229, 230)',
+                            fontWeight: 'null',
+                        },
+                        align: 'left',
+                        x: 5
+                    },
+
+                    credits: {
+                        enabled: false
+                    },
+
+                    scrollbar: {
+                        enabled: false
+                    },
+                    yAxis: {
+                        gridLineWidth: 0,
+                        plotLines: [{
+                            color: 'rgb(237, 138, 136 )',
+                            width: 2,
+                            value: 140
+                        }]
+                    },
+                    series: [{
+                        name: 'Average Shipping Time',
+                        data: actualPair,
+                        color: 'rgb(237, 138, 136 )',
+                        type: 'area',
+                        tooltip: {
+                            valueDecimals: 2
+                        },
+                        fillColor: {
+
+                            linearGradient: {
+                                x1: 4,
+                                y1: 4,
+                                x2: 0,
+                                y2: 0
+                            },
+                            stops: [
+                                [0, Highcharts.getOptions().colors[0]],
+                                [1, Highcharts.color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                            ]
+                        }
+                    }]
+                });
+
+                // ------------------------------------------------------------
+
+                var tempDateArr = data.map(item => item.OrderDate)
+                var tempData = data
+                var parsedDate = []
+                for (var i = 0; i < tempDateArr.length; i++) {
+                    var date = new Date(tempDateArr[i]),
+                        mnth = ("0" + (date.getMonth() + 1)).slice(-2),
+                        day = ("0" + date.getDate()).slice(-2);
+                    parsedDate.push(Date.parse([date.getFullYear(), mnth].join(" ")));
+                }
+                for (var i = 0; i < tempData.length; i++) {
+                    tempData[i].OrderDate = parsedDate[i]
+                }
+
+                //creating a distinct array of Dates in YYYYMM format 
+                var setDate = new Set(parsedDate)
+                var distinctdate = Array.from(setDate)
+                actualDistinctDate = distinctdate.sort()     // sorted distinct date set 
+
+
+                // Formated key value pair according to date and avg.
+                var actualPair = []
+                var estimatedSales = 0
+                for (var i = 0; i < actualDistinctDate.length; i++) {
+                    var actualArray = []
+                    var count = 0
+                    var sum = 0
+                    for (var j = 0; j < tempData.length; j++) {
+                        if (actualDistinctDate[i] === tempData[j].OrderDate) {
+                            sum += tempData[j].SalesForecast                 // Total month wise sales 
+                            count += 1
+                        }
+                    }
+                    estimatedSales += sum
+                    actualArray.push(distinctdate[i])
+                    actualArray.push(sum)
+                    actualPair.push(actualArray)    // Array of multiDate and average
+                }
+                // days to ship area chart
+                Highcharts.stockChart('chartContainer5', {
+                    chart: {
+                        type: 'line',
+                        zoomType: 'xy',
+                        panning: true,
+                        panKey: 'shift'
+                    },
+                    navigator: {
+                        enabled: false
+                    },
+
+                    rangeSelector: {
+                        enabled: false,
+                        inputEnabled: false,
+                        inputStyle: {
+                            color: 'gray',
+                            fontWeight: 'bold'
+                        },
+                        buttonTheme: {
+                            fill: 'rgba(26,146,146,1)',
+
+                        },
+                        states: {
+                            select: {
+                                fill: 'gray',
+                                style: {
+                                    color: 'gray'
+                                }
+                            }
+                        },
+
+                    },
+                    navigation: {
+                        buttonOptions: {
+                            enabled: false
+                        },
+                    },
+
+                    title: {
+                        useHTML: true,
+                        text : '<div><p style= "margin: 18px 1px;"> Estimated Sales <span style = "font-size: 25px;color:rgba(26,146,146,1);">  $' + estimatedSales +'</span></p></div>',
+                        style: {
+                            color: 'rgb(216, 229, 230)',
+                            fontWeight: 'null'
+                        },
+                        align: 'left',
+                        x: 0
+                    },
+                    scrollbar: {
+                        enabled: false
+                    },
+                    yAxis: {
+                        gridLineWidth: 0,
+                        plotLines: [{
+                            color: 'rgba(26,146,146,1)',
+                            width: 2,
+                            value: 386000
+                        }]
+                    },
+                    credits: {
+                        enabled: false
+                    },
+                    series: [{
+                        name: 'Average Shipping Time',
+                        data: actualPair,
+                        color: 'rgba(26,146,146,1)',
+                        type: 'area',
+                        tooltip: {
+                            valueDecimals: 2
+                        },
+                        fillColor: {
+
+                            linearGradient: {
+                                x1: 4,
+                                y1: 4,
+                                x2: 0,
+                                y2: 0
+                            },
+                            stops: [
+                                [0, Highcharts.getOptions().colors[0]],
+                                [1, Highcharts.color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                            ]
+                        }
+                    }]
+                });
+
+
+
+                // ------------------------------------------------------------
+
+                var tempDateArr = data.map(item => item.OrderDate)
+                var tempData = data
+                var parsedDate = []
+                for (var i = 0; i < tempDateArr.length; i++) {
+                    var date = new Date(tempDateArr[i]),
+                        mnth = ("0" + (date.getMonth() + 1)).slice(-2),
+                        day = ("0" + date.getDate()).slice(-2);
+                    parsedDate.push(Date.parse([date.getFullYear(), mnth].join(" ")));
+                }
+                for (var i = 0; i < tempData.length; i++) {
+                    tempData[i].OrderDate = parsedDate[i]
+                }
+
+                //creating a distinct array of Dates in YYYYMM format 
+                var setDate = new Set(parsedDate)
+                var distinctdate = Array.from(setDate)
+                actualDistinctDate = distinctdate.sort()     // sorted distinct date set 
+
+
+                // Formated key value pair according to date and avg.
+                var actualPair = []
+                var TotalOrders = 0
+                for (var i = 0; i < actualDistinctDate.length; i++) {
+                    var actualArray = []
+                    var count = 0
+                    var sum = 0
+                    var avg = 1
+                    for (var j = 0; j < tempData.length; j++) {
+                        if (actualDistinctDate[i] === tempData[j].OrderDate) {
+                            count += 1
+                        }
+                    }
+                    // Temperary array for creating key value pair                
+                    actualArray.push(distinctdate[i])
+                    actualArray.push(count)
+                    actualPair.push(actualArray)    // Array of multiDate and average
+                    TotalOrders += count
+                }
+                Highcharts.stockChart('chartContainer6', {
+                    chart: {
+                        type: 'line',
+                        zoomType: 'xy',
+                        panning: true,
+                        panKey: 'shift'
+                    },
+                    navigator: {
+                        enabled: false
+                    },
+                    rangeSelector: {
+                        enabled: false,
+                        inputEnabled: false,
+                        inputStyle: {
+                            color: 'gray',
+                            fontWeight: 'bold'
+                        },
+                        buttonTheme: {
+                            fill: 'rgba(26,146,146,1)',
+
+                        },
+                        states: {
+                            select: {
+                                fill: 'gray',
+                                style: {
+                                    color: 'gray'
+                                }
+                            }
+                        },
+
+                    },
+                    navigation: {
+                        buttonOptions: {
+                            enabled: false
+                        },
+                    },
+                    title: {
+                        useHTML: true,
+                        text : '<div><p style= "margin: 1px 1px;"> Total Orders <span style = "font-size: 25px;color:rgba(26,146,146,1);"> ' + TotalOrders +'</span></p></div>',
+                        style: {
+                            color: 'rgb(216, 229, 230)',
+                            fontWeight: 'null'
+                        },
+                        align: 'left',
+                        x: 0
+                    },
+                    subtitle: {
+                        useHTML: true,     
+                        text : '<div><p style= "margin: 1px 1px;font-size: 15px;">Target Orders <span style = "font-size: 20px;">  ' + 12000 +'</span></p></div>',
+                        style: {
+                            color: 'rgb(216, 229, 230)',
+                            fontWeight: 'null',
+                        },
+                        align: 'left',
+                        x: 5
+                    },
+                    scrollbar: {
+                        enabled: false
+                    },
+                    yAxis: {
+                        gridLineWidth: 0,
+                        plotLines: [{
+                            color: 'rgba(26,146,146,1)',
+                            width: 2,
+                            value: 772
+                        }]
+                    },
+                    credits: {
+                        enabled: false
+                    },
+                    series: [{
+                        name: 'Average Shipping Time',
+                        data: actualPair,
+                        color: 'rgba(26,146,146,1)',
+                        type: 'area',
+                        tooltip: {
+                            valueDecimals: 2
+                        },
+                        fillColor: {
+
+                            linearGradient: {
+                                x1: 4,
+                                y1: 4,
+                                x2: 0,
+                                y2: 0
+                            },
+                            stops: [
+                                [0, Highcharts.getOptions().colors[0]],
+                                [1, Highcharts.color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                            ]
+                        }
+                    }]
+                });
+
+                // --------------------------------------
+
+                var tempDateArr = data.map(item => item.OrderDate)
+                var tempData = data
+                var parsedDate = []
+                for (var i = 0; i < tempDateArr.length; i++) {
+                    var date = new Date(tempDateArr[i]),
+                        mnth = ("0" + (date.getMonth() + 1)).slice(-2),
+                        day = ("0" + date.getDate()).slice(-2);
+                    parsedDate.push(Date.parse([date.getFullYear(), mnth].join(" ")));
+                }
+                for (var i = 0; i < tempData.length; i++) {
+                    tempData[i].OrderDate = parsedDate[i]
+                }
+
+                //creating a distinct array of Dates in YYYYMM format 
+                var setDate = new Set(parsedDate)
+                var distinctdate = Array.from(setDate)
+                actualDistinctDate = distinctdate.sort()
+
+                // Formated key value pair according to date and avg.
+                var actualPair = []
+                var showAvg = 0
+                var showCount = 0
+                for (var i = 0; i < actualDistinctDate.length; i++) {
+                    var actualArray = []
+                    var count = 0
+                    var sum = 0
+                    var avg = 1
+                    for (var j = 0; j < tempData.length; j++) {
+                        if (actualDistinctDate[i] === tempData[j].OrderDate) {
+                            sum += tempData[j].DaystoShipActual
+                            count += 1
+                        }
+                    }
+                    var avg = sum / count  //Finding Average 
+
+                    // Temperary array for creating key value pair                
+                    actualArray.push(distinctdate[i])
+                    actualArray.push(avg)
+                    showAvg += actualArray[1]
+                    actualPair.push(actualArray)    // Array of multiDate and average
+                    showCount += 1
+                }
+
+                // days to ship area chart
+                Highcharts.stockChart('chartContainer7', {
+                    chart: {
+                        type: 'line',
+                        zoomType: 'xy',
+                        panning: true,
+                        panKey: 'shift'
+                    },
+                    navigator: {
+                        enabled: false
+                    },
+                    rangeSelector: {
+                        enabled: false,
+                        inputEnabled: false,
+                        inputStyle: {
+                            color: 'gray',
+                            fontWeight: 'bold'
+                        },
+                        buttonTheme: {
+                            fill: 'rgba(26,146,146,1)',
+
+                        },
+                        states: {
+                            select: {
+                                fill: 'gray',
+                                style: {
+                                    color: 'gray'
+                                }
+                            }
+                        },
+
+                    },
+                    navigation: {
+                        buttonOptions: {
+                            enabled: false
+                        },
+                    },
+
+                    title: {
+                        useHTML: true,
+                        text : '<div><p style= "margin: 3px 1px;"> Avg. Days To Ship <span style = "font-size: 25px;color:rgb(237, 138, 136 );"> ' +  (showAvg / showCount).toFixed(2) +'</span></p></div>',
+                        style: {
+                            color: 'rgb(216, 229, 230)',
+                            fontWeight: 'null'
+                        },
+                        align: 'left',
+                        x: 0
+                    },
+                    subtitle: {
+                        useHTML: true,     
+                        text : '<div><p style= "margin: 1px 1px;font-size: 15px;">Target Days To Ship <span style = "font-size: 20px;">  ' + 3.5 +'</span></p></div>',
+                        style: {
+                            color: 'rgb(216, 229, 230)',
+                            fontWeight: 'null',
+                        },
+                        align: 'left',
+                        x: 5
+                    },
+                    scrollbar: {
+                        enabled: false
+                    },
+                    yAxis: {
+                        gridLineWidth: 0,
+                        plotLines: [{
+                            color: 'rgb(237, 138, 136 )',
+                            width: 2,
+                            value: 5.9
+                        }]
+                    },
+                    credits: {
+                        enabled: false
+                    },
+                    series: [{
+                        name: 'Average Shipping Time',
+                        data: actualPair,
+                        color: 'rgb(237, 138, 136 )',
+                        type: 'area',
+                        tooltip: {
+                            valueDecimals: 2
+                        },
+                        fillColor: {
+
+                            linearGradient: {
+                                x1: 4,
+                                y1: 4,
+                                x2: 0,
+                                y2: 0
+                            },
+                            stops: [
+                                [0, Highcharts.getOptions().colors[0]],
+                                [1, Highcharts.color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                            ]
+                        }
+                    }]
+                });
+
+                // -------------------------------------------------------------
+
+                var tempDateArr = data.map(item => item.OrderDate)
+                var tempData = data
+                var parsedDate = []
+                for (var i = 0; i < tempDateArr.length; i++) {
+                    var date = new Date(tempDateArr[i]),
+                        mnth = ("0" + (date.getMonth() + 1)).slice(-2),
+                        day = ("0" + date.getDate()).slice(-2);
+                    parsedDate.push(Date.parse([date.getFullYear(), mnth].join(" ")));
+                }
+                for (var i = 0; i < tempData.length; i++) {
+                    tempData[i].OrderDate = parsedDate[i]
+                }
+
+                //creating a distinct array of Dates in YYYYMM format 
+                var setDate = new Set(parsedDate)
+                var distinctdate = Array.from(setDate)
+                actualDistinctDate = distinctdate.sort()
+
+                // Formated key value pair according to date and avg.
+                var actualPair = []
+                var TotalCorporateSales = 0
+                for (var i = 0; i < actualDistinctDate.length; i++) {
+                    var actualArray = []
+                    var count = 0
+                    var sum = 0
+                    for (var j = 0; j < tempData.length; j++) {
+                        if (actualDistinctDate[i] === tempData[j].OrderDate) {
+                            if (tempData[j].Segment == 'Corporate') {
+
+                                sum += tempData[j].Sales
+                                count += 1
+                            }
+
+                        }
+                    }
+                    TotalCorporateSales += sum
+
+                    // Temperary array for creating key value pair                
+                    actualArray.push(distinctdate[i])
+                    actualArray.push(sum)
+                    actualPair.push(actualArray)    // Array of multiDate and average
+                }
+
+                // days to ship area chart
+                Highcharts.stockChart('chartContainer8', {
+                    chart: {
+                        type: 'line',
+                        zoomType: 'xy',
+                        panning: true,
+                        panKey: 'shift'
+                    },
+                    navigator: {
+                        enabled: false
+                    },
+                    rangeSelector: {
+                        enabled: false,
+                        inputEnabled: false,
+                        inputStyle: {
+                            color: 'gray',
+                            fontWeight: 'bold'
+                        },
+                        buttonTheme: {
+                            fill: 'rgba(26,146,146,1)',
+
+                        },
+                        states: {
+                            select: {
+                                fill: 'gray',
+                                style: {
+                                    color: 'gray'
+                                }
+                            }
+                        },
+
+                    },
+                    navigation: {
+                        buttonOptions: {
+                            enabled: false
+                        },
+                    },
+
+                    title: {
+                        useHTML: true,
+                        text : '<div><p style= "margin: -4px 1px;"> Corpoorate Sales <span style = "font-size: 25px;color:rgba(26,146,146,1);"> $' +  TotalCorporateSales +'</span></p></div>',
+                        style: {
+                            color: 'rgb(216, 229, 230)',
+                            fontWeight: 'null'
+                        },
+                        align: 'left',
+                        x: 0
+                    },
+                    subtitle: {
+                        useHTML: true,     
+                        text : '<div><p style= "margin: 1px 1px;font-size: 15px;">Target Corporate Sales <span style = "font-size: 20px;">  $' + (TotalCorporateSales-10000) +'</span></p></div>',
+                        style: {
+                            color: 'rgb(216, 229, 230)',
+                            fontWeight: 'null',
+                        },
+                        align: 'left',
+                        x: 5
+                    },
+                    // title: {
+
+                    //     style: {
+                    //         color: 'rgb(216, 229, 230)',
+                    //         fontWeight: 'null'
+                    //     },
+                    //     text: 'Corporate Sales',
+                    //     align: 'left',
+                    //     x: 0
+                    // },
+                    // subtitle: {
+                    //     text: "$ " + TotalCorporateSales,
+                    //     style: {
+                    //         color: 'rgb(216, 229, 230)',
+                    //         fontWeight: 'null'
+                    //     },
+                    //     align: 'left',
+                    //     x: 5
+                    // },
+
+                    scrollbar: {
+                        enabled: false
+                    },
+                    credits: {
+                        enabled: false
+                    },
+                    yAxis: {
+                        gridLineWidth: 0,
+                        plotLines: [{
+                            color: 'rgba(26,146,146,1)',
+                            width: 2,
+                            value: 74870
+                        }]
+                    },
+                    series: [{
+                        name: 'Average Shipping Time',
+                        data: actualPair,
+                        color: 'rgba(26,146,146,1)',
+                        type: 'area',
+                        tooltip: {
+                            valueDecimals: 2
+                        },
+                        fillColor: {
+
+                            linearGradient: {
+                                x1: 4,
+                                y1: 4,
+                                x2: 0,
+                                y2: 0
+                            },
+                            stops: [
+                                [0, Highcharts.getOptions().colors[0]],
+                                [1, Highcharts.color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                            ]
+                        }
+                    }]
+                });
+
+
+
+            });   // function cloosing (main)
+
+    </script>
+</body>
+
+</html>

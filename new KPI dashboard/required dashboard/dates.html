@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <script src="https://code.highcharts.com/stock/highstock.js"></script>
+    <script src="https://code.highcharts.com/stock/modules/data.js"></script>
+    <script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/stock/modules/export-data.js"></script>
+    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"> </script>
+
+    <figure class="highcharts-figure">
+        <div class="header">
+            <h1>Super Store Dashboard</h1>
+        </div>
+        <div class="row">
+            <div id="chartContainer1" class="col-2"></div>
+            <div id="chartContainer2" class="col-2"></div>
+            <div id="chartContainer3" class='col-3'></div>
+        </div>
+        <div class="row">
+
+        </div>
+        <div class="row">
+            <div class="cc4-wrapper col-3">
+                <div id="chartContainer4"></div>
+            </div>
+            <div class="cc4-wrapper col-3">
+                <div id="tableWrap"></div>
+            </div>
+    </figure>
+
+
+    <style>
+        body {
+            background-color: rgba(18, 51, 55);
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .row {
+            display: flex;
+            margin: 5px auto;
+        }
+
+        .header {
+            padding: 3px;
+            text-align: center;
+            background: rgba(18, 51, 55);
+            color: rgb(216, 229, 230);
+            font-size: 20px;
+            font-family: 'Comic Sans MS';
+
+        }
+
+        .highcharts-figure,
+        .highcharts-data-table table {
+            min-width: 0px;
+            max-width: inherit;
+            max-height: null;
+            margin: 0em auto 3em auto;
+        }
+
+        #container {
+            height: null;
+        }
+
+        .highcharts-background {
+            fill: rgba(18, 51, 55);
+            /* stroke: 'rgba(7,78,75,0.45)'; */
+            /* stroke-width: 2px; */
+        }
+
+        .col-2 {
+            width: 25%;
+            margin: auto 3px;
+        }
+
+        .col-3 {
+            width: 45%;
+            margin: auto 2px;
+        }
+
+        .cc4-wrapper {
+            width: 50%;
+            margin: auto 2px;
+            overflow-y: scroll;
+            overflow-x: hidden;
+            max-height: 400px;
+        }
+
+        .highcharts-data-table table {
+            font-family: Verdana, sans-serif;
+            border-collapse: collapse;
+            border: 1px solid #EBEBEB;
+            margin: 10px auto;
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .highcharts-data-table caption {
+            padding: 1em 0;
+            font-size: 1.2em;
+            color: #555;
+        }
+
+        .highcharts-data-table th {
+            font-weight: 600;
+            padding: 0.5em;
+        }
+
+        .highcharts-data-table td,
+        .highcharts-data-table th,
+        .highcharts-data-table caption {
+            padding: 0.5em;
+        }
+    </style>
+
+
+</head>
+
+<body>
+    <script>
+        var data = $.getJSON(`https://raw.githubusercontent.com/shivakuchya/json/master/finalsamplesuperstore.json`, function (data) {
+
+            // DaysToShip function 
+            function DaysToShip(data) {
+                var tempDateArr = data.map(item => item.OrderDate)
+                var tempData = data
+                var parsedDate = []
+                for (var i = 0; i < tempDateArr.length; i++) {
+                    var date = new Date(tempDateArr[i]),
+                        mnth = ("0" + (date.getMonth() + 1)).slice(-2),
+                        day = ("0" + date.getDate()).slice(-2);
+                    parsedDate.push(Date.parse([date.getFullYear(), mnth].join(" ")));
+                }
+                for (var i = 0; i < tempData.length; i++) {
+                    tempData[i].OrderDate = parsedDate[i]
+                }
+
+                //creating a distinct array of Dates in YYYYMM format 
+                var setDate = new Set(parsedDate)
+                var distinctdate = Array.from(setDate)
+                actualDistinctDate = distinctdate.sort()
+
+                // Formated key value pair according to date and avg.
+                var actualPair = []
+                var showAvg = 0
+                var showCount = 0
+                for (var i = 0; i < actualDistinctDate.length; i++) {
+                    var actualArray = []
+                    var count = 0
+                    var sum = 0
+                    var avg = 1
+                    for (var j = 0; j < tempData.length; j++) {
+                        if (actualDistinctDate[i] === tempData[j].OrderDate) {
+                            sum += tempData[j].DaystoShipActual
+                            count += 1
+                        }
+                    }
+                    var avg = sum / count  //Finding Average 
+
+                    // Temperary array for creating key value pair                
+                    actualArray.push(distinctdate[i])
+                    actualArray.push(avg)
+                    showAvg += actualArray[1]
+                    actualPair.push(actualArray)    // Array of multiDate and average
+                    showCount += 1
+                }
+                // days to ship area chart
+                var chart1 = Highcharts.stockChart('chartContainer1', {
+                    chart: {
+                        type: 'line',
+                        zoomType: 'x',
+                        panning: true,
+                        panKey: 'shift'
+                    },
+                    navigator: {
+                        enabled: false
+                    },
+                    rangeSelector: {
+                        inputEnabled: true,
+                        inputStyle: {
+                            color: 'gray',
+                            fontWeight: 'bold'
+                        },
+                        buttonTheme: {
+                            fill: 'rgba(26,146,146,1)',
+
+                        },
+                        states: {
+                            select: {
+                                fill: 'gray',
+                                style: {
+                                    color: 'gray'
+                                }
+                            }
+                        },
+
+                    },
+                    navigation: {
+                        buttonOptions: {
+                            enabled: false
+                        },
+                    },
+                    title: {
+
+                        style: {
+                            color: 'rgb(216, 229, 230)',
+                            fontWeight: 'null'
+                        },
+                        text: 'Days To Ship',
+                        align: 'left',
+                        x: 0
+                    },
+                    subtitle: {
+                        text: (showAvg / showCount).toFixed(2) + ' Total Avg. Day<br>Target 3.5 Days',
+                        style: {
+                            color: 'rgb(216, 229, 230)',
+                            fontWeight: 'null'
+                        },
+                        align: 'left',
+                        x: 5
+                    },
+
+                    scrollbar: {
+                        enabled: true
+                    },
+                    series: [{
+                        name: 'Average Shipping Time',
+                        data: actualPair,
+                        color: 'rgba(26,146,146,1)',
+                        type: 'area',
+                        threshold: null,
+                        tooltip: {
+                            valueDecimals: 2
+                        },
+                        fillColor: {
+
+                            linearGradient: {
+                                x1: 4,
+                                y1: 4,
+                                x2: 0,
+                                y2: 0
+                            },
+                            stops: [
+                                [0, Highcharts.getOptions().colors[0]],
+                                [1, Highcharts.color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                            ]
+                        }
+                    }]
+                });
+
+
+                //----------------------------------------------------------------------------------------
+
+                //Total Sales area Graph
+                var tempDateArr = data.map(item => item.OrderDate)
+                var tempData = data
+                var parsedDate = []
+                var tempshippingDate = []
+                var totalAcctualSales = 0
+                for (var i = 0; i < tempDateArr.length; i++) {
+                    var date = new Date(tempDateArr[i]),
+                        mnth = ("0" + (date.getMonth() + 1)).slice(-2),
+                        day = ("0" + date.getDate()).slice(-2);
+                    tempshippingDate.push([date.getFullYear(), mnth].join("/"));
+                    parsedDate.push(Date.parse([date.getFullYear(), mnth].join(" ")));
+                    totalAcctualSales+=data[i].Sales // For subtitle of the chart 2 (TOTAL SALES)
+                }
+                console.log(totalAcctualSales)
+                for (var i = 0; i < tempData.length; i++) {
+                    tempData[i].OrderDate = parsedDate[i]
+                }
+
+                //creating a distinct array of Dates in YYYYMM format 
+                actualDistinctDate = (Array.from(new Set(parsedDate))).sort() // Parsed Sorted Distinct- Order Date
+                var shippingDate = (Array.from(new Set(tempshippingDate))).sort() // Distinct Sorted ShipDate
+
+                // Formated key value pair according to date and avg.
+                var actualPair = []
+                for (var i = 0; i < actualDistinctDate.length; i++) {
+                    var actualArray = []
+                    var count = 0
+                    var sum = 0
+                    var avg = 1
+                    for (var j = 0; j < tempData.length; j++) {
+                        if (actualDistinctDate[i] === tempData[j].OrderDate) {
+                            sum += tempData[j].Sales
+                            // count += 1
+                        }
+                    }
+                    var avg = sum // / count  //Finding Average 
+
+                    // Temperary array for creating key value pair                
+                    actualArray.push(distinctdate[i])
+                    actualArray.push(avg)
+
+                    actualPair.push(actualArray)    // Array of multiDate and average
+                }
+
+                // days to ship area chart
+                chart2 = Highcharts.stockChart('chartContainer2', {
+
+                    chart: {
+                        type: 'line',
+                        zoomType: 'xy',
+                        panning: true,
+                        panKey: 'shift'
+                    },
+                    navigator: {
+                        enabled: false
+                    },
+                    rangeSelector: {
+                        inputEnabled: true,
+                        inputStyle: {
+                            color: 'gray',
+                            fontWeight: 'bold'
+                        },
+                        buttonTheme: {
+                            fill: 'rgba(26,146,146,1)',
+
+                        },
+                        states: {
+                            select: {
+                                fill: 'gray',
+                                style: {
+                                    color: 'gray'
+                                }
+                            }
+                        },
+
+                    },
+                    navigation: {
+                        buttonOptions: {
+                            enabled: false
+                        },
+                    },
+                    title: {
+                        style: {
+                            color: 'rgb(216, 229, 230)',
+                            fontWeight: 'null'
+                        },
+                        text: 'Total Sales',
+                        align: 'left',
+                        x: 0
+
+                    },
+                    subtitle: {
+                        text: '$ '+(totalAcctualSales),
+                        style: {
+                            color: 'rgb(216, 229, 230)',
+                            fontWeight: 'null',
+                            fontSize: 20
+                        },
+                        align: 'left',
+                        x: 5
+                    },
+
+                    scrollbar: {
+                        enabled: true
+                    },
+                    series: [{
+                        name: 'Total Sales',
+                        data: actualPair,
+                        color: 'rgba(26,146,146,1)',
+                        type: 'area',
+                        threshold: null,
+                        tooltip: {
+                            valueDecimals: 2
+                        },
+                        fillColor: {
+                            linearGradient: {
+                                x1: 4,
+                                y1: 4,
+                                x2: 0,
+                                y2: 0
+                            },
+                            stops: [
+                                [0, Highcharts.getOptions().colors[0]],
+                                [1, Highcharts.color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                            ]
+                        }
+                    }]
+                });
+                //------------------------------------------------------------------------------------------------------------------------------------
+                // console.log(actualDistinctDate)
+                // console.log(actualDistinctDate.length)
+
+
+                //Shipping mode according to the month
+                var tempShippingMode = data.map(item => item.ShipMode)
+                var ShippingMode = (Array.from(new Set(tempShippingMode)))
+                var actualArr = []
+
+                for (var i = 0; i < ShippingMode.length; i++) {
+                    for (var j = 0; j < actualDistinctDate.length; j++) {
+                        var tempArr = []
+                        var count = 0
+                        var sum = 0
+                        for (var k = 0; k < tempData.length; k++) {
+                            if (actualDistinctDate[j] === tempData[k].OrderDate) {
+                                if (ShippingMode[i] === tempData[k].ShipMode) {
+                                    // console.log(ShippingMode[i])
+                                    tempArr.push(tempData[k].DaystoShipActual)
+                                    count += 1
+                                }
+                            }
+                        }
+                        // tempArr.push(ShippingMode[i])
+                        // tempArr.push(sum)
+                        actualArr.push(tempArr)
+
+                    }
+
+
+                }
+                // [['same day']:[arr1,arr2,aa3..arr48]]
+                // console.log(ShippingMode)
+                // console.log(actualArr)
+                var ShippingDict = {};
+                seriesOptions = [];
+
+                for (var i = 0; i < ShippingMode.length; i++) {
+                    var tempAccArr = []
+                    var count = 0;
+                    while (count < 48) {
+                        var sum = actualArr[0].reduce(function (a, b) {
+                            return a + b;
+                        }, 0)
+                        tempAccArr.push(sum / actualArr[0].length)
+                        actualArr.splice(0, 1)
+                        count += 1
+                    }
+                    // console.log(tempAccArr)
+                    ShippingDict[ShippingMode[i]] = tempAccArr
+
+                    seriesOptions.push({
+                        name: ShippingMode[i],
+                        data: ShippingDict[ShippingMode[i]],
+                        dataLabels: {
+                            format: '{point.y:.2f}'
+                        }
+                    });
+                }
+
+                // console.log(ShippingDict)
+
+                var chart3 = Highcharts.chart('chartContainer3', {
+
+                    chart: {
+                        type: 'line'
+                    },
+
+                    legend: {
+                        itemStyle: {
+                            "color": "white"
+                        }
+                    },
+                    navigation: {
+                        buttonOptions: {
+                            enabled: false
+                        },
+                    },
+                    title: {
+                        style: {
+                            color: 'white',
+                            fontWeight: 'null'
+                        },
+                        text: 'Shipping Mode',
+                        align: 'left',
+                        x: 45
+
+                    },
+                    subtitle: {
+                        text: ' By Days To Ship',
+                        style: {
+                            color: 'rgb(216, 229, 230)',
+                            fontWeight: 'null'
+                        },
+                        align: 'left',
+                        x: 48
+                    },
+                    xAxis: {
+                        categories: shippingDate
+                    },
+                    yAxis: {
+                        title: {
+                            text: 'Days To Ship'
+                        }
+                    },
+                    plotOptions: {
+                        series: {
+                            dataLabels: {
+                                enabled: true,
+                                format: '{point.y:.2f}'
+                            }
+                        },
+                        line: {
+                            dataLabels: {
+                                enabled: false
+                            },
+                            marker: {
+                                enabled: false
+                            },
+
+                            enableMouseTracking: true
+                        }
+                    },
+                    series: seriesOptions
+
+
+                });
+                //-------------------------------------------------------------------------------------------------------
+                let ProductList = [...new Set(data.map(item => item.SubCategory))];
+
+                // console.log(ProductList)
+
+                var Productresult = [];
+                var i = 0;
+
+                $.each(ProductList, function (index, value) {
+                    var ProductData = {};
+
+                    ProductData.name = value;
+                    if (i == 0) {
+                        //     ProductData.sliced = true;
+                        //    ProductData.selected = true;
+                    }
+
+                    const product = data.filter(data => {
+                        if (data.SubCategory == value) {
+                            return data
+                        }
+                    });
+
+                    ProductData.y = product.reduce((sum, currentValue) => {
+                        return sum + currentValue.Sales
+                    }, 0);
+
+                    Productresult.push(ProductData);
+                    i++;
+
+
+                    // console.log(ProductData)
+                });
+                Productresult.sort(function (a, b) {
+                    return b.y - a.y;
+                });
+
+
+                var chart4 = Highcharts.chart('chartContainer4', {
+                    chart: {
+                        type: 'bar',
+                        height: 450,
+                    },
+                    title: {
+
+                        style: {
+                            color: 'rgb(216, 229, 230)',
+                            fontWeight: 'null',
+                        },
+                        text: "Product Type's",
+                        align: 'left',
+                        x: 0
+                    },
+                    subtitle: {
+                        text: 'According to the Sales',
+                        style: {
+                            color: 'rgb(216, 229, 230)',
+                            fontWeight: 'null',
+                        },
+                        align: 'left',
+                        x: 5
+                    },
+                    navigation: {
+                        buttonOptions: {
+                            enabled: false
+                        },
+                    },
+                    accessibility: {
+                        announceNewData: {
+                            enabled: true
+                        }
+                    },
+
+                    xAxis: {
+                        type: 'category',
+                    },
+                    yAxis: {
+                        title: {
+                            text: 'Total percent market share',
+                        }
+
+                    },
+                    legend: {
+                        enabled: false
+                    },
+                    plotOptions: {
+                        series: {
+                            borderWidth: 0,
+                            dataLabels: {
+                                enabled: true,
+                                format: '$ {point.y:.1f}'
+
+                            },
+                            point: {
+                                events: {
+                                    click: function () {
+                                        var categoryData = filterData(this.name, data);
+                                        createTable(categoryData);
+                                        //console.log(this);
+                                    }
+                                }
+                            }
+                        }
+                    },
+
+                    tooltip: {
+                        headerFormat: '<span style="font-size:11px">{series.name}</span><br>',
+                        pointFormat: '<span style="color:{point.color}">{point.name}</span>: <b>$ {point.y:.1f}</b> of total<br/>'
+                    },
+
+                    series: [{
+                        // turboThreshold: 5000,
+                        name: 'Product Quentity ',
+                        colorByPoint: true,
+                        data: Productresult,
+
+
+                        dataSorting: {
+                            enabled: true,
+                            sortKey: 'productData'
+                        },
+                    }],
+
+                });
+                //---------------------------------------------------------------------------------------
+
+                // createTable(data);
+                //----------------------------------------------------------------------------------------
+                chart1.render();
+                chart2.render();
+                chart3.render();
+                chart4.render();
+            }
+
+            DaysToShip(data) // DaysToShip funnction Cal
+        });
+
+        function filterData(filterByvalue, data) {
+            const filterData = data.filter(({ SubCategory }) => SubCategory === filterByvalue);
+            return filterData;
+        }
+
+        function createTable(data) {
+            var theTable = document.createElement("table");
+            var theRow = null;
+            var theKeyCell = null;
+            var theValueCell = null;
+
+            theRow = document.createElement("tr");
+
+            theKeyCell = document.createElement("td");
+            theKeyCell.innerHTML = '#';
+            color: 'white'
+            theRow.appendChild(theKeyCell)
+
+            // VALUE CELL
+            theValueCell = document.createElement("td");
+            theValueCell.innerHTML = 'Order ID';
+            theRow.appendChild(theValueCell);
+
+            theValueCell = document.createElement("td");
+            theValueCell.innerHTML = 'OrderDate';
+            theRow.appendChild(theValueCell);
+
+            theValueCell = document.createElement("td");
+            theValueCell.innerHTML = 'CustomerName';
+            theRow.appendChild(theValueCell);
+
+            theValueCell = document.createElement("td");
+            theValueCell.innerHTML = 'ProductName';
+            theRow.appendChild(theValueCell);
+
+            theValueCell = document.createElement("td");
+            theValueCell.innerHTML = 'ShipMode';
+            theRow.appendChild(theValueCell);
+
+
+            theValueCell = document.createElement("td");
+            theValueCell.innerHTML = 'Sales';
+            theRow.appendChild(theValueCell);
+
+            theValueCell = document.createElement("td");
+            theValueCell.innerHTML = 'Profit';
+            theRow.appendChild(theValueCell);
+
+            theTable.appendChild(theRow);
+
+            for (let key in data) {
+                // ROW
+                theRow = document.createElement("tr");
+
+                // KEY CELL
+                theKeyCell = document.createElement("td");
+                theKeyCell.innerHTML = key;
+                theRow.appendChild(theKeyCell);
+
+
+
+
+                // VALUE CELL
+                theValueCell = document.createElement("td");
+                theValueCell.innerHTML = data[key]['Order ID'];
+                theRow.appendChild(theValueCell);
+
+                theValueCell = document.createElement("td");
+                theValueCell.innerHTML = (data[key]['OrderDate']);
+                theRow.appendChild(theValueCell);
+
+                theValueCell = document.createElement("td");
+                theValueCell.innerHTML = data[key]['CustomerName'];
+                theRow.appendChild(theValueCell);
+
+                theValueCell = document.createElement("td");
+                theValueCell.innerHTML = data[key]['ProductName'];
+                theRow.appendChild(theValueCell);
+
+                theValueCell = document.createElement("td");
+                theValueCell.innerHTML = data[key]['ShipMode'] + [" "];
+                theRow.appendChild(theValueCell);
+
+
+                theValueCell = document.createElement("td");
+                theValueCell.innerHTML = ['$ '] + data[key]['Sales'];
+                theRow.appendChild(theValueCell);
+
+                theValueCell = document.createElement("td");
+                theValueCell.innerHTML = data[key]['Profit'] + ['%'];
+                theRow.appendChild(theValueCell);
+
+                theTable.appendChild(theRow);
+
+
+            }
+
+            // (D) PUT INTO HTML CONTAINER
+            // Add <div id="tableWrap"></div> to your HTML
+            document.getElementById("tableWrap").innerHTML = "";
+            // console.log(theTable)
+            document.getElementById("tableWrap").appendChild(theTable);
+        }
+
+    </script>
+</body>
+
+</html>
